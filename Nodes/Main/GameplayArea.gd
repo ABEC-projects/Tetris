@@ -57,6 +57,7 @@ var center: Vector2i = Vector2i(4,1)
 var curr_tetromino: int
 var curr_rotation: int = 0
 var field_changed: bool = true
+var need_to_spawn: bool = false
 var inputs_storage: Dictionary = {
 	"turn_clockwise": false,
 	"turn_clockwise_just_pressed": false,
@@ -117,6 +118,22 @@ func _ready():
 			field[x].append(0)
 	spawn_tetromino(Tetromino.L) #get(Tetromino.find_key(randi()%7))
 
+func remove_full_rows():
+	for y in range(field_size.y):
+		var full_row: bool = true
+		for x in range(field_size.x):
+			if field[x][y] >= 0:
+				full_row = false
+				break
+		if full_row:
+			for del in range(field_size.x):
+				field[del][y] = 0
+			for y1 in range(y-1, -1, -1):
+				for x1 in range(field_size.x):
+					if field[x1][y1] < 0:
+						field[x1][y1+1] = field[x1][y1]
+						field[x1][y1] = 0
+
 func dropTetromino():
 	var loop_counter = 0
 	while (fall_prepare_time >= fall_tick_period && loop_counter == 0) || inputs_storage["hard_drop"]:
@@ -145,7 +162,7 @@ func dropTetromino():
 						field[x][y] = -field[x][y]
 			inputs_storage["hard_drop"] = false
 			collision = false
-			spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
+			need_to_spawn = true
 		else:
 			center.y += 1
 			field.assign(new_field.duplicate())
@@ -269,6 +286,11 @@ func _process(_delta):
 	moveTetromino()
 	rotateTetromino()
 	dropTetromino()
+	remove_full_rows()
+	
+	if need_to_spawn:
+		spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
+		need_to_spawn = false
 	
 	if inputs_storage["soft_drop"] == true:
 		fall_prepare_time += _delta*soft_drop_speed

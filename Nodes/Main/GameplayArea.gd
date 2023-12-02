@@ -10,20 +10,34 @@ const cells: Dictionary = {
 					[Vector2i(-2,0), Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0)], 
 					[Vector2i(0,-2), Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1)]],
 	
-	Tetromino.L:    [[Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0), Vector2i(1,-1)],
-					[Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1), Vector2i(1,1)],
-					[Vector2i(-1,1), Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0)],
-					[Vector2i(-1,-1), Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1)]],
-	
 	Tetromino.J:    [[Vector2i(-1,-1), Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0)],
 					[Vector2i(1,-1), Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1)],
 					[Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0), Vector2i(1,1)], 
 					[Vector2i(-1,1), Vector2i(0,1), Vector2i(0,0), Vector2i(0,-1)]],
 	
-	Tetromino.O: [[Vector2i(0,-1), Vector2i(1,-1), Vector2i(0,0), Vector2i(1,0)]],
-	Tetromino.S: [[Vector2i(-1,0), Vector2i(0,0), Vector2i(0,-1), Vector2i(1,-1)]],
-	Tetromino.T: [[Vector2i(-1, 0), Vector2i(0,0), Vector2i(0,-1), Vector2i(1,0)]],
-	Tetromino.Z: [[Vector2i(-1,-1), Vector2i(0,-1), Vector2i(0,0), Vector2i(1,0)]]
+	Tetromino.L:    [[Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0), Vector2i(1,-1)],
+					[Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1), Vector2i(1,1)],
+					[Vector2i(-1,1), Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(-1,-1), Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1)]],
+	
+	Tetromino.O:	[[Vector2i(0,-1), Vector2i(1,-1), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(0,-1), Vector2i(1,-1), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(0,-1), Vector2i(1,-1), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(0,-1), Vector2i(1,-1), Vector2i(0,0), Vector2i(1,0)]],
+	Tetromino.S: 	[[Vector2i(-1,0), Vector2i(0,0), Vector2i(0,-1), Vector2i(1,-1)],
+					[Vector2i(0,-1), Vector2i(0,0), Vector2i(1,0), Vector2i(1,1)],
+					[Vector2i(-1,1), Vector2i(0,1), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(-1,-1), Vector2i(-1,0), Vector2i(0,0), Vector2i(0,1)]],
+	
+	Tetromino.T: 	[[Vector2i(-1, 0), Vector2i(0,0), Vector2i(0,-1), Vector2i(1,0)],
+					[Vector2i(0, 1), Vector2i(0,0), Vector2i(0,-1), Vector2i(1,0)],
+					[Vector2i(-1, 0), Vector2i(0,0), Vector2i(0,1), Vector2i(1,0)],
+					[Vector2i(0, 1), Vector2i(0,0), Vector2i(0,-1), Vector2i(-1,0)]],
+	
+	Tetromino.Z: 	[[Vector2i(-1,-1), Vector2i(0,-1), Vector2i(0,0), Vector2i(1,0)],
+					[Vector2i(1,-1), Vector2i(1,0), Vector2i(0,0), Vector2i(0,1)],
+					[Vector2i(-1,0), Vector2i(0,0), Vector2i(0,1), Vector2i(1,1)],
+					[Vector2i(0,-1), Vector2i(0,0), Vector2i(-1,0), Vector2i(-1,1)]]
 }
 @export var color: Dictionary = {
 	Tetromino.I: 1,
@@ -45,7 +59,9 @@ var curr_rotation: int = 0
 var field_changed: bool = true
 var inputs_storage: Dictionary = {
 	"turn_clockwise": false,
+	"turn_clockwise_just_pressed": false,
 	"turn_counterclockwise": false,
+	"turn_counterclockwise_just_pressed": false,
 	"hard_drop": false, 
 	"soft_drop": false,
 	"move_right": false,
@@ -53,11 +69,13 @@ var inputs_storage: Dictionary = {
 	"move_left": false,
 	"move_left_just_pressed": false
 }
+var just_rotated: bool = false
+var just_moved: bool = false
 @export var target_frame_rate: int = 120
 @export var game_update_tick: float = 1.0/60
 @export var fall_tick_period: float = game_update_tick*30
 @export var rotation_tick_period: float = game_update_tick*10
-@export var move_tick_period: float = game_update_tick*5
+@export var move_tick_period: float = game_update_tick*15
 @export var soft_drop_speed: float = 20
 
 
@@ -67,6 +85,9 @@ func defeat():
 func spawn_tetromino(tetromino):
 	curr_tetromino = tetromino
 	curr_rotation = 0
+	fall_prepare_time = 0
+	move_prepare_time = 0
+	rotation_prepare_time = 0
 	if tetromino != Tetromino.I:
 		center = Vector2i (4, 1)
 	else:
@@ -131,48 +152,57 @@ func dropTetromino():
 			field_changed = true
 
 func rotateTetromino():
+	if (inputs_storage["turn_clockwise_just_pressed"] || inputs_storage["turn_counterclockwise_just_pressed"]) && !just_rotated:
+		rotation_prepare_time = rotation_tick_period
 	if rotation_prepare_time-rotation_tick_period >= 0:
 		var collision: bool = false
 		rotation_prepare_time -= rotation_tick_period
 		new_field = field.duplicate(true)
 		var new_rotation = curr_rotation
-		if inputs_storage["turn_clockwise"]:
+		if (inputs_storage["turn_clockwise"] && !just_rotated) || (Input.is_action_pressed("turn_clockwise") && just_rotated):
 			new_rotation += 1
-		elif inputs_storage["turn_counterclockwise"]:
-			new_rotation += 1
+		elif (inputs_storage["turn_counterclockwise"] && !just_rotated) || (Input.is_action_pressed("turn_counterclockwise") && just_rotated):
+			new_rotation -= 1
+		
 		if new_rotation == -1:
 			new_rotation = 3
-		new_rotation = new_rotation%4
+		elif new_rotation == 4:
+			new_rotation = 0
 		
-		for del: Vector2i in cells[curr_tetromino][curr_rotation]:
-			new_field[center.x+del.x][center.y+del.y] = 0
-		for add: Vector2i in cells[curr_tetromino][new_rotation]:
-			if (center.x+add.x >=0 && center.x+add.x <field_size.x && center.y+add.y >= 0 
-					&& center.y+add.y < field_size.y && new_field[center.x+add.x][center.y+add.y] == 0):
-				new_field[center.x+add.x][center.y+add.y] = color[curr_tetromino]
-			else:
-				collision = true
-				break
-		if !collision:
-			field = new_field
-			curr_rotation = new_rotation
-			field_changed = true
+		if new_rotation != curr_rotation:
+			for del: Vector2i in cells[curr_tetromino][curr_rotation]:
+				new_field[center.x+del.x][center.y+del.y] = 0
+			for add: Vector2i in cells[curr_tetromino][new_rotation]:
+				if (center.x+add.x >=0 && center.x+add.x <field_size.x && center.y+add.y >= 0 
+						&& center.y+add.y < field_size.y && new_field[center.x+add.x][center.y+add.y] == 0):
+					new_field[center.x+add.x][center.y+add.y] = color[curr_tetromino]
+				else:
+					collision = true
+					break
+			if !collision:
+				field = new_field
+				curr_rotation = new_rotation
+				field_changed = true
+				just_rotated = true
+		else:
+			just_rotated = false
 		inputs_storage["turn_clockwise"] = false
 		inputs_storage["turn_counterclockwise"] = false
+		inputs_storage["turn_clockwise_just_pressed"] = false
+		inputs_storage["turn_counterclockwise_just_pressed"] = false
 
 func moveTetromino():
-	if inputs_storage["move_right_just_pressed"]:
-		move_prepare_time = move_tick_period
-	if inputs_storage["move_left"]:
+	if inputs_storage["move_right_just_pressed"] || inputs_storage["move_left_just_pressed"]:
 		move_prepare_time = move_tick_period
 	
 	if move_prepare_time >= move_tick_period:
 		var direction: int = 0
 		var rightRangeForX: Array
-		if inputs_storage["move_right"]:
+		if (inputs_storage["move_right"] && !just_moved):
 			direction = 1
 			rightRangeForX = range(field_size.x-1, -1, -1)
-		elif inputs_storage["move_left"]:
+			move_prepare_time -= move_tick_period
+		elif (inputs_storage["move_left"] && !just_moved) || (Input.is_action_pressed("move_left") && just_moved):
 			direction = -1
 			rightRangeForX = range(0, field_size.x, 1)
 			move_prepare_time -= move_tick_period
@@ -190,6 +220,7 @@ func moveTetromino():
 						else:
 							collision = true
 							break
+			just_moved = true
 			if !collision:
 				center.x += direction
 				for i in range(toMove.size()):
@@ -199,10 +230,11 @@ func moveTetromino():
 				field_changed = true
 		else:
 			move_prepare_time = move_tick_period
+			just_moved = false
 		inputs_storage["move_right"] = false
 		inputs_storage["move_left"] = false
 		inputs_storage["move_right_just_pressed"] = false
-		inputs_storage["move_leftd_just_pressed"] = false
+		inputs_storage["move_left_just_pressed"] = false
 
 func get_inputs():
 	inputs_storage["hard_drop"] = false
@@ -223,8 +255,13 @@ func get_inputs():
 	
 	if Input.is_action_pressed("turn_clockwise"):
 		inputs_storage["turn_clockwise"] = true
+	if Input.is_action_just_pressed("turn_clockwise"):
+		inputs_storage["turn_clockwise_just_pressed"] = true
+	
 	if Input.is_action_pressed("turn_counterclockwise"):
 		inputs_storage["turn_counterclockwise"] = true
+	if Input.is_action_just_pressed("turn_counterclockwise"):
+		inputs_storage["turn_counterclockwise_just_pressed"] = true
 
 func _process(_delta):
 	get_inputs()
@@ -235,6 +272,7 @@ func _process(_delta):
 	
 	if inputs_storage["soft_drop"] == true:
 		fall_prepare_time += _delta*soft_drop_speed
+		inputs_storage["soft_drop"] = false
 	else:
 		fall_prepare_time += _delta
 	rotation_prepare_time += _delta

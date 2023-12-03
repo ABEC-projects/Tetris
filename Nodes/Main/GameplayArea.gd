@@ -52,10 +52,13 @@ var field: Array = []
 var new_field: Array = []
 var fall_prepare_time: float = 0.0
 var rotation_prepare_time: float = 0.0
+var rotation_delay_time: float = 0.0
 var move_prepare_time: float = 0.0
+var movement_delay_time: float = 0.0
 var center: Vector2i = Vector2i(4,1)
 var curr_tetromino: int
 var curr_rotation: int = 0
+var hard_drop: bool = false
 var field_changed: bool = true
 var need_to_spawn: bool = false
 var inputs_storage: Dictionary = {
@@ -76,14 +79,17 @@ var just_moved: bool = false
 @export var game_update_tick: float = 1.0/60
 @export var fall_tick_period: float = game_update_tick*30
 @export var rotation_tick_period: float = game_update_tick*10
-@export var move_tick_period: float = game_update_tick*15
+@export var move_tick_period: float = game_update_tick*5
 @export var soft_drop_speed: float = 20
+@export var rotation_delay: float = game_update_tick*15
+@export var movement_delay: float = game_update_tick*10
 
 
 func defeat():
 	get_tree().paused = true
 
 func spawn_tetromino(tetromino):
+	field_changed = true
 	curr_tetromino = tetromino
 	curr_rotation = 0
 	fall_prepare_time = 0
@@ -116,7 +122,7 @@ func _ready():
 		field.append([])
 		for y in range(field_size.y):
 			field[x].append(0)
-	spawn_tetromino(Tetromino.L) #get(Tetromino.find_key(randi()%7))
+	spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
 
 func remove_full_rows():
 	for y in range(field_size.y):
@@ -126,6 +132,7 @@ func remove_full_rows():
 				full_row = false
 				break
 		if full_row:
+			field_changed = true
 			for del in range(field_size.x):
 				field[del][y] = 0
 			for y1 in range(y-1, -1, -1):
@@ -135,13 +142,9 @@ func remove_full_rows():
 						field[x1][y1] = 0
 
 func dropTetromino():
-	var loop_counter = 0
-	while (fall_prepare_time >= fall_tick_period && loop_counter == 0) || inputs_storage["hard_drop"]:
-		if !inputs_storage["hard_drop"]:
-			fall_prepare_time -= fall_tick_period
-		else:
-			fall_prepare_time = 0
-		loop_counter += 1
+	while fall_prepare_time >= fall_tick_period:
+		fall_prepare_time -= fall_tick_period
+		#region FallingAndCollisionCheck
 		new_field = field.duplicate(true)
 		var collision: bool = false
 		for x in range(field_size.x-1, -1, -1):
@@ -155,6 +158,8 @@ func dropTetromino():
 					else:
 						collision = true
 						break
+		#endregion
+		#region IfCollision
 		if collision:
 			for x in range(field_size.x-1, -1, -1):
 				for y in range(field_size.y-1, -1, -1):
@@ -163,15 +168,26 @@ func dropTetromino():
 			inputs_storage["hard_drop"] = false
 			collision = false
 			need_to_spawn = true
+			fall_prepare_time = 0
+		#endregion
+		#region IfNoCollision
 		else:
 			center.y += 1
 			field.assign(new_field.duplicate())
-			field_changed = true
+		#endregion
+		field_changed = true
 
 func rotateTetromino():
+	var is_first_tick: bool = false
 	if (inputs_storage["turn_clockwise_just_pressed"] || inputs_storage["turn_counterclockwise_just_pressed"]) && !just_rotated:
 		rotation_prepare_time = rotation_tick_period
-	if rotation_prepare_time-rotation_tick_period >= 0:
+		is_first_tick = true
+		rotation_delay_time = 0
+	
+	if rotation_delay_time < rotation_delay:
+		rotation_prepare_time = min(rotation_prepare_time, rotation_tick_period)
+	
+	if (rotation_prepare_time-rotation_tick_period >= 0 && rotation_delay_time >= rotation_delay) || is_first_tick:
 		var collision: bool = false
 		rotation_prepare_time -= rotation_tick_period
 		new_field = field.duplicate(true)
@@ -209,13 +225,19 @@ func rotateTetromino():
 		inputs_storage["turn_counterclockwise_just_pressed"] = false
 
 func moveTetromino():
+	var is_first_tick: bool = false
 	if inputs_storage["move_right_just_pressed"] || inputs_storage["move_left_just_pressed"]:
 		move_prepare_time = move_tick_period
+		is_first_tick = true
+		movement_delay_time = 0
 	
-	if move_prepare_time >= move_tick_period:
+	if movement_delay_time < movement_delay:
+		move_prepare_time = min(move_prepare_time, move_tick_period)
+	
+	if (move_prepare_time >= move_tick_period && movement_delay_time >= movement_delay) || is_first_tick:
 		var direction: int = 0
 		var rightRangeForX: Array
-		if (inputs_storage["move_right"] && !just_moved):
+		if (inputs_storage["move_right"] && !just_moved) || (Input.is_action_pressed("move_right") && just_moved):
 			direction = 1
 			rightRangeForX = range(field_size.x-1, -1, -1)
 			move_prepare_time -= move_tick_period
@@ -224,6 +246,7 @@ func moveTetromino():
 			rightRangeForX = range(0, field_size.x, 1)
 			move_prepare_time -= move_tick_period
 		if direction != 0:
+			just_moved = true
 			var collision: bool = false
 			var toMove: Array = []
 			for y in range(field_size.y-1, -1, -1):
@@ -237,7 +260,6 @@ func moveTetromino():
 						else:
 							collision = true
 							break
-			just_moved = true
 			if !collision:
 				center.x += direction
 				for i in range(toMove.size()):
@@ -254,9 +276,6 @@ func moveTetromino():
 		inputs_storage["move_left_just_pressed"] = false
 
 func get_inputs():
-	inputs_storage["hard_drop"] = false
-	if Input.is_action_just_pressed("hard_drop"):
-		inputs_storage["hard_drop"] = true
 	if Input.is_action_pressed("soft_drop"):
 		inputs_storage["soft_drop"] = true
 	
@@ -283,22 +302,29 @@ func get_inputs():
 func _process(_delta):
 	get_inputs()
 	
-	moveTetromino()
-	rotateTetromino()
-	dropTetromino()
-	remove_full_rows()
+	if Input.is_action_just_pressed("hard_drop"):
+		hard_drop = true
+		fall_prepare_time = fall_tick_period*100
 	
 	if need_to_spawn:
 		spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
 		need_to_spawn = false
 	
-	if inputs_storage["soft_drop"] == true:
+	if Input.is_action_pressed("soft_drop") == true:
 		fall_prepare_time += _delta*soft_drop_speed
 		inputs_storage["soft_drop"] = false
 	else:
 		fall_prepare_time += _delta
 	rotation_prepare_time += _delta
+	rotation_delay_time += _delta
 	move_prepare_time += _delta
+	movement_delay_time += _delta
+	
+	moveTetromino()
+	rotateTetromino()
+	dropTetromino()
+	remove_full_rows()
+	
 	if field_changed:
 		update_tilemap()
 	field_changed = false

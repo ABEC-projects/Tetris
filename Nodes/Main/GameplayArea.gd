@@ -1,10 +1,11 @@
 extends Node2D
 
-const field_size: Vector2 = Vector2(10,20)
+const ceiling_offset = 3
+const field_size: Vector2 = Vector2(10,20+ceiling_offset)
 enum Tetromino {
 	I, O, T, J, L, S, Z
 }
-const cells: Dictionary = {
+const cells := {
 	Tetromino.I:    [[Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0), Vector2i(2,0)],
 					[Vector2i(0,-1), Vector2i(0,0), Vector2i(0,1), Vector2i(0,2)],
 					[Vector2i(-2,0), Vector2i(-1,0), Vector2i(0,0), Vector2i(1,0)], 
@@ -39,7 +40,16 @@ const cells: Dictionary = {
 					[Vector2i(-1,0), Vector2i(0,0), Vector2i(0,1), Vector2i(1,1)],
 					[Vector2i(0,-1), Vector2i(0,0), Vector2i(-1,0), Vector2i(-1,1)]]
 }
-@export var color: Dictionary = {
+const offsets:Array = 	[[Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0)],
+						[Vector2i(0,0),Vector2i(1,0),Vector2i(1,-1),Vector2i(0,2),Vector2i(1,2)],
+						[Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0)],
+						[Vector2i(0,0),Vector2i(-1,0),Vector2i(-1,-1),Vector2i(0,2),Vector2i(-1,2)]]
+
+const offsetsI:Array = 	[[Vector2i(0,0),Vector2i(-1,0),Vector2i(2,0),Vector2i(-1,0),Vector2i(2,0)],
+						[Vector2i(-1,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,1),Vector2i(0,-2)],
+						[Vector2i(-1,1),Vector2i(1,1),Vector2i(-2,1),Vector2i(1,0),Vector2i(-2,0)],
+						[Vector2i(0,1),Vector2i(0,1),Vector2i(0,1),Vector2i(0,-1),Vector2i(0,2)]]
+@export var color : = {
 	Tetromino.I: 1,
 	Tetromino.J: 3,
 	Tetromino.L: 6,
@@ -50,18 +60,18 @@ const cells: Dictionary = {
 }
 var field: Array = []
 var new_field: Array = []
-var fall_prepare_time: float = 0.0
-var rotation_prepare_time: float = 0.0
-var rotation_delay_time: float = 0.0
-var move_prepare_time: float = 0.0
-var movement_delay_time: float = 0.0
-var center: Vector2i = Vector2i(4,1)
+var fall_prepare_time := 0.0
+var rotation_prepare_time := 0.0
+var rotation_delay_time := 0.0
+var mevement_prepare_time := 0.0
+var movement_delay_time := 0.0
+var center := Vector2i(4,1)
 var curr_tetromino: int
-var curr_rotation: int = 0
-var hard_drop: bool = false
-var field_changed: bool = true
-var need_to_spawn: bool = false
-var inputs_storage: Dictionary = {
+var curr_rotation := 0									#0 is "0", 1 is "r", 2 is "2" and 3 is "l"
+var hard_drop := false
+var field_changed := true
+var need_to_spawn := false
+var inputs_storage := {
 	"turn_clockwise": false,
 	"turn_clockwise_just_pressed": false,
 	"turn_counterclockwise": false,
@@ -73,16 +83,16 @@ var inputs_storage: Dictionary = {
 	"move_left": false,
 	"move_left_just_pressed": false
 }
-var just_rotated: bool = false
-var just_moved: bool = false
-@export var target_frame_rate: int = 120
-@export var game_update_tick: float = 1.0/60
-@export var fall_tick_period: float = game_update_tick*30
-@export var rotation_tick_period: float = game_update_tick*10
-@export var move_tick_period: float = game_update_tick*5
-@export var soft_drop_speed: float = 20
-@export var rotation_delay: float = game_update_tick*15
-@export var movement_delay: float = game_update_tick*10
+var just_rotated := false
+var just_moved := false
+@export var target_frame_rate := 120
+@export var game_update_tick := 1.0/60
+@export var fall_tick_period := game_update_tick*120
+@export var rotation_tick_period := game_update_tick*10
+@export var move_tick_period := game_update_tick*5
+@export var soft_drop_speed := 20
+@export var rotation_delay := game_update_tick*15
+@export var movement_delay := game_update_tick*10
 
 
 func defeat():
@@ -93,12 +103,12 @@ func spawn_tetromino(tetromino):
 	curr_tetromino = tetromino
 	curr_rotation = 0
 	fall_prepare_time = 0
-	move_prepare_time = 0
+	mevement_prepare_time = 0
 	rotation_prepare_time = 0
 	if tetromino != Tetromino.I:
-		center = Vector2i (4, 1)
+		center = Vector2i (4, 1+ceiling_offset)
 	else:
-		center =  Vector2i (4, 0)
+		center =  Vector2i (4, ceiling_offset)
 	new_field = field.duplicate(true)
 	var collision: bool = false
 	for i in range(4):
@@ -114,13 +124,13 @@ func spawn_tetromino(tetromino):
 func update_tilemap():
 	for x in range(field_size.x):
 		for y in range(field_size.y):
-			$Tetrominos_tiles.set_cell(0, Vector2i(x, y), 0, Vector2i(abs(field[x][y])-1, 0))
+			$Tetrominos_tiles.set_cell(0, Vector2i(x, y-ceiling_offset), 0, Vector2i(abs(field[x][y])-1, 0))
 
 func _ready():
 	Engine.max_fps = target_frame_rate
 	for x in range(field_size.x):
 		field.append([])
-		for y in range(field_size.y):
+		for y in range(field_size.y+ceiling_offset):
 			field[x].append(0)
 	spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
 
@@ -179,7 +189,7 @@ func dropTetromino():
 
 func rotateTetromino():
 	var is_first_tick: bool = false
-	if (inputs_storage["turn_clockwise_just_pressed"] || inputs_storage["turn_counterclockwise_just_pressed"]) && !just_rotated:
+	if (inputs_storage["turn_clockwise_just_pressed"] || inputs_storage["turn_counterclockwise_just_pressed"]):
 		rotation_prepare_time = rotation_tick_period
 		is_first_tick = true
 		rotation_delay_time = 0
@@ -194,25 +204,41 @@ func rotateTetromino():
 		var new_rotation = curr_rotation
 		if (inputs_storage["turn_clockwise"] && !just_rotated) || (Input.is_action_pressed("turn_clockwise") && just_rotated):
 			new_rotation += 1
+			print("+1")
 		elif (inputs_storage["turn_counterclockwise"] && !just_rotated) || (Input.is_action_pressed("turn_counterclockwise") && just_rotated):
 			new_rotation -= 1
+			print("-1")
 		
 		if new_rotation == -1:
 			new_rotation = 3
 		elif new_rotation == 4:
 			new_rotation = 0
-		
 		if new_rotation != curr_rotation:
 			for del: Vector2i in cells[curr_tetromino][curr_rotation]:
 				new_field[center.x+del.x][center.y+del.y] = 0
-			for add: Vector2i in cells[curr_tetromino][new_rotation]:
-				if (center.x+add.x >=0 && center.x+add.x <field_size.x && center.y+add.y >= 0 
-						&& center.y+add.y < field_size.y && new_field[center.x+add.x][center.y+add.y] == 0):
-					new_field[center.x+add.x][center.y+add.y] = color[curr_tetromino]
+			var curr_offset := 0
+			var offset_to_use: Vector2i
+			while curr_offset < 4:
+				collision = false
+				if curr_tetromino == Tetromino.I:
+					offset_to_use = offsetsI[curr_rotation][curr_offset]-offsetsI[new_rotation][curr_offset]
 				else:
-					collision = true
+					offset_to_use = offsets[curr_rotation][curr_offset]-offsets[new_rotation][curr_offset]
+				for add: Vector2i in cells[curr_tetromino][new_rotation]:
+					if (center.x+add.x+offset_to_use.x >=0 && center.x+add.x+offset_to_use.x <field_size.x && center.y+add.y >= 0 
+							&& center.y+add.y+offset_to_use.y < field_size.y+offset_to_use.y && center.y+add.y+offset_to_use.y >= 0
+							&& new_field[center.x+add.x+offset_to_use.x][center.y+add.y+offset_to_use.y] == 0):
+						pass
+					else:
+						collision = true
+				if collision == false:
 					break
-			if !collision:
+				curr_offset += 1
+			
+			if curr_offset != 4:
+				for add: Vector2i in cells[curr_tetromino][new_rotation]:
+						new_field[center.x+add.x+offset_to_use.x][center.y+add.y+offset_to_use.y] = color[curr_tetromino]
+				center += offset_to_use
 				field = new_field
 				curr_rotation = new_rotation
 				field_changed = true
@@ -227,24 +253,24 @@ func rotateTetromino():
 func moveTetromino():
 	var is_first_tick: bool = false
 	if inputs_storage["move_right_just_pressed"] || inputs_storage["move_left_just_pressed"]:
-		move_prepare_time = move_tick_period
+		mevement_prepare_time = move_tick_period
 		is_first_tick = true
 		movement_delay_time = 0
 	
 	if movement_delay_time < movement_delay:
-		move_prepare_time = min(move_prepare_time, move_tick_period)
+		mevement_prepare_time = min(mevement_prepare_time, move_tick_period)
 	
-	if (move_prepare_time >= move_tick_period && movement_delay_time >= movement_delay) || is_first_tick:
+	if (mevement_prepare_time >= move_tick_period && movement_delay_time >= movement_delay) || is_first_tick:
 		var direction: int = 0
 		var rightRangeForX: Array
 		if (inputs_storage["move_right"] && !just_moved) || (Input.is_action_pressed("move_right") && just_moved):
 			direction = 1
 			rightRangeForX = range(field_size.x-1, -1, -1)
-			move_prepare_time -= move_tick_period
+			mevement_prepare_time -= move_tick_period
 		elif (inputs_storage["move_left"] && !just_moved) || (Input.is_action_pressed("move_left") && just_moved):
 			direction = -1
 			rightRangeForX = range(0, field_size.x, 1)
-			move_prepare_time -= move_tick_period
+			mevement_prepare_time -= move_tick_period
 		if direction != 0:
 			just_moved = true
 			var collision: bool = false
@@ -268,7 +294,7 @@ func moveTetromino():
 					field[toMove[i].x+direction][toMove[i].y] = color[curr_tetromino]
 				field_changed = true
 		else:
-			move_prepare_time = move_tick_period
+			mevement_prepare_time = move_tick_period
 			just_moved = false
 		inputs_storage["move_right"] = false
 		inputs_storage["move_left"] = false
@@ -317,7 +343,7 @@ func _process(_delta):
 		fall_prepare_time += _delta
 	rotation_prepare_time += _delta
 	rotation_delay_time += _delta
-	move_prepare_time += _delta
+	mevement_prepare_time += _delta
 	movement_delay_time += _delta
 	
 	moveTetromino()

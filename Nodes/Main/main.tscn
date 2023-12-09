@@ -1,13 +1,14 @@
-[gd_scene load_steps=8 format=3 uid="uid://cuiwin4353u6r"]
+[gd_scene load_steps=10 format=3 uid="uid://cuiwin4353u6r"]
 
 [ext_resource type="Script" path="res://Nodes/Main/GameplayArea.gd" id="1_hmy31"]
 [ext_resource type="Script" path="res://Nodes/Main/main.gd" id="1_uk6bs"]
 [ext_resource type="Texture2D" uid="uid://b7j4cltuj8xwh" path="res://Resourses/Tetriminos/Tilemap.png" id="2_cdsyl"]
 [ext_resource type="PackedScene" uid="uid://0rikjuwhwxi0" path="res://Nodes/UI/ui.tscn" id="5_3pxsb"]
+[ext_resource type="Texture2D" uid="uid://b4w0j8k1wamri" path="res://Resourses/Alt tetrominos/tilemap.svg" id="5_kkbdc"]
 [ext_resource type="Texture2D" uid="uid://cfk2dh51uriww" path="res://Resourses/Tetriminos/Board/Board.png" id="8_2svjh"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qkqnn"]
-resource_name = "Everething"
+resource_name = "Standart"
 texture = ExtResource("2_cdsyl")
 texture_region_size = Vector2i(64, 64)
 use_texture_padding = false
@@ -22,9 +23,23 @@ use_texture_padding = false
 10:0/0 = 0
 0:0/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kg3ni"]
+resource_name = "Alt"
+texture = ExtResource("5_kkbdc")
+texture_region_size = Vector2i(64, 64)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+6:0/0 = 0
+7:0/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_3wcsh"]
 tile_size = Vector2i(64, 64)
 sources/0 = SubResource("TileSetAtlasSource_qkqnn")
+sources/1 = SubResource("TileSetAtlasSource_kg3ni")
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_uk6bs")
@@ -48,6 +63,8 @@ format = 2
 layer_0/name = "Game"
 layer_1/name = "Queue"
 layer_1/tile_data = PackedInt32Array()
+layer_2/name = "Ghost"
+layer_2/tile_data = PackedInt32Array()
 
 [node name="Camera2D" type="Camera2D" parent="GameplayArea"]
 

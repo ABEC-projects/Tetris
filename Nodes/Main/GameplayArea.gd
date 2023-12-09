@@ -1,7 +1,9 @@
 extends Node2D
 
 const ceiling_offset = 3
-const field_size: Vector2 = Vector2(10,20+ceiling_offset)
+const field_size: Vector2i = Vector2i(10,20+ceiling_offset)
+const queue_begin_point := Vector2i(13, 1)
+const storage_begin_point := Vector2i(-4, 16)
 enum Tetromino {
 	I, O, T, J, L, S, Z
 }
@@ -40,12 +42,12 @@ const cells := {
 					[Vector2i(-1,0), Vector2i(0,0), Vector2i(0,1), Vector2i(1,1)],
 					[Vector2i(0,-1), Vector2i(0,0), Vector2i(-1,0), Vector2i(-1,1)]]
 }
-const offsets:Array = 	[[Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0)],
+const offsets: Array = 	[[Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0)],
 						[Vector2i(0,0),Vector2i(1,0),Vector2i(1,-1),Vector2i(0,2),Vector2i(1,2)],
 						[Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,0)],
 						[Vector2i(0,0),Vector2i(-1,0),Vector2i(-1,-1),Vector2i(0,2),Vector2i(-1,2)]]
 
-const offsetsI:Array = 	[[Vector2i(0,0),Vector2i(-1,0),Vector2i(2,0),Vector2i(-1,0),Vector2i(2,0)],
+const offsetsI: Array = 	[[Vector2i(0,0),Vector2i(-1,0),Vector2i(2,0),Vector2i(-1,0),Vector2i(2,0)],
 						[Vector2i(-1,0),Vector2i(0,0),Vector2i(0,0),Vector2i(0,1),Vector2i(0,-2)],
 						[Vector2i(-1,1),Vector2i(1,1),Vector2i(-2,1),Vector2i(1,0),Vector2i(-2,0)],
 						[Vector2i(0,1),Vector2i(0,1),Vector2i(0,1),Vector2i(0,-1),Vector2i(0,2)]]
@@ -60,6 +62,9 @@ const offsetsI:Array = 	[[Vector2i(0,0),Vector2i(-1,0),Vector2i(2,0),Vector2i(-1
 }
 var field: Array = []
 var new_field: Array = []
+var tetromino_queque: Array
+var array_with_all_tetrominos := [Tetromino.I, Tetromino.O, Tetromino.T, Tetromino.J,
+								 Tetromino.L, Tetromino.S, Tetromino.Z]
 var fall_prepare_time := 0.0
 var rotation_prepare_time := 0.0
 var rotation_delay_time := 0.0
@@ -77,17 +82,18 @@ var inputs_storage := {
 	"turn_counterclockwise": false,
 	"turn_counterclockwise_just_pressed": false,
 	"hard_drop": false, 
-	"soft_drop": false,
 	"move_right": false,
 	"move_right_just_pressed": false,
 	"move_left": false,
 	"move_left_just_pressed": false
 }
+var can_store := true
 var just_rotated := false
 var just_moved := false
+var stored_tetromino := -1
 @export var target_frame_rate := 120
 @export var game_update_tick := 1.0/60
-@export var fall_tick_period := game_update_tick*120
+@export var fall_tick_period := game_update_tick*60
 @export var rotation_tick_period := game_update_tick*10
 @export var move_tick_period := game_update_tick*5
 @export var soft_drop_speed := 20
@@ -95,44 +101,74 @@ var just_moved := false
 @export var movement_delay := game_update_tick*10
 
 
+func rand_tetromino() -> int:
+	return Tetromino.get(Tetromino.find_key(randi()%7))
+
 func defeat():
 	get_tree().paused = true
 
-func spawn_tetromino(tetromino):
+func spawn_tetromino():
+	#region updating_queue
+	if tetromino_queque.size() <= array_with_all_tetrominos.size():
+		array_with_all_tetrominos.shuffle()
+		tetromino_queque.append_array(array_with_all_tetrominos.duplicate())
+	#endregion
+	can_store = true
 	field_changed = true
-	curr_tetromino = tetromino
+	curr_tetromino = tetromino_queque.pop_at(0)
 	curr_rotation = 0
 	fall_prepare_time = 0
 	mevement_prepare_time = 0
 	rotation_prepare_time = 0
-	if tetromino != Tetromino.I:
+	if curr_tetromino != Tetromino.I:
 		center = Vector2i (4, 1+ceiling_offset)
 	else:
 		center =  Vector2i (4, ceiling_offset)
 	new_field = field.duplicate(true)
 	var collision: bool = false
 	for i in range(4):
-		if new_field[cells[tetromino][0][i].x+center.x] [cells[tetromino][0][i].y+center.y] == 0:
-			new_field[cells[tetromino][0][i].x+center.x] [cells[tetromino][0][i].y+center.y] = color[tetromino]
+		if new_field[cells[curr_tetromino][0][i].x+center.x] [cells[curr_tetromino][0][i].y+center.y] == 0:
+			new_field[cells[curr_tetromino][0][i].x+center.x] [cells[curr_tetromino][0][i].y+center.y] = color[curr_tetromino]
 		else:
 			defeat()
 			collision = true
 			break
 	if !collision:
 		field = new_field
+	update_queue_visualisation()
 
 func update_tilemap():
 	for x in range(field_size.x):
 		for y in range(field_size.y):
 			$Tetrominos_tiles.set_cell(0, Vector2i(x, y-ceiling_offset), 0, Vector2i(abs(field[x][y])-1, 0))
 
+func update_queue_visualisation():
+	$Tetrominos_tiles.clear_layer(1)
+	for delX in range(4):
+		for delY in range(30):
+			$Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(delX, delY),
+										 0, Vector2i(-2, 0))
+	for i in range(tetromino_queque.size()):
+		for cell_to_draw in cells[tetromino_queque[i]][0]:
+			$Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(cell_to_draw.x, cell_to_draw.y+i*3),
+										 0, Vector2i(abs(color[tetromino_queque[i]])-1, 0))
+	if stored_tetromino != -1:
+		for i in cells[stored_tetromino][0]:
+			$Tetrominos_tiles.set_cell	(1, storage_begin_point+Vector2i(i.x, i.y),
+										 0, Vector2i(color[stored_tetromino]-1, 0))
+
 func _ready():
+	array_with_all_tetrominos.shuffle()
+	tetromino_queque.append_array(array_with_all_tetrominos.duplicate())
+	array_with_all_tetrominos.shuffle()
+	tetromino_queque.append_array(array_with_all_tetrominos.duplicate())
+	update_queue_visualisation()
 	Engine.max_fps = target_frame_rate
 	for x in range(field_size.x):
 		field.append([])
 		for y in range(field_size.y+ceiling_offset):
 			field[x].append(0)
-	spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
+	spawn_tetromino()
 
 func remove_full_rows():
 	for y in range(field_size.y):
@@ -204,10 +240,8 @@ func rotateTetromino():
 		var new_rotation = curr_rotation
 		if (inputs_storage["turn_clockwise"] && !just_rotated) || (Input.is_action_pressed("turn_clockwise") && just_rotated):
 			new_rotation += 1
-			print("+1")
 		elif (inputs_storage["turn_counterclockwise"] && !just_rotated) || (Input.is_action_pressed("turn_counterclockwise") && just_rotated):
 			new_rotation -= 1
-			print("-1")
 		
 		if new_rotation == -1:
 			new_rotation = 3
@@ -302,8 +336,6 @@ func moveTetromino():
 		inputs_storage["move_left_just_pressed"] = false
 
 func get_inputs():
-	if Input.is_action_pressed("soft_drop"):
-		inputs_storage["soft_drop"] = true
 	
 	if Input.is_action_pressed("move_left"):
 		inputs_storage["move_left"] = true
@@ -325,20 +357,37 @@ func get_inputs():
 	if Input.is_action_just_pressed("turn_counterclockwise"):
 		inputs_storage["turn_counterclockwise_just_pressed"] = true
 
+
+func store_tetromino():
+	if Input.is_action_just_pressed("store") && can_store:
+		if stored_tetromino != -1:
+			var buff
+			buff = stored_tetromino
+			stored_tetromino = curr_tetromino
+			for del in cells[curr_tetromino][curr_rotation]:
+				field[del.x+center.x][del.y+center.y] = 0
+			tetromino_queque.push_front(buff)
+			spawn_tetromino()
+		else:
+			stored_tetromino = curr_tetromino
+			for del in cells[curr_tetromino][curr_rotation]:
+				field[del.x+center.x][del.y+center.y] = 0
+			spawn_tetromino()
+		can_store = false
+		update_queue_visualisation()
+
 func _process(_delta):
 	get_inputs()
+	if need_to_spawn:
+		spawn_tetromino()
+		need_to_spawn = false
 	
 	if Input.is_action_just_pressed("hard_drop"):
 		hard_drop = true
 		fall_prepare_time = fall_tick_period*100
 	
-	if need_to_spawn:
-		spawn_tetromino(Tetromino.get(Tetromino.find_key(randi()%7)))
-		need_to_spawn = false
-	
 	if Input.is_action_pressed("soft_drop") == true:
 		fall_prepare_time += _delta*soft_drop_speed
-		inputs_storage["soft_drop"] = false
 	else:
 		fall_prepare_time += _delta
 	rotation_prepare_time += _delta
@@ -350,6 +399,7 @@ func _process(_delta):
 	rotateTetromino()
 	dropTetromino()
 	remove_full_rows()
+	store_tetromino()
 	
 	if field_changed:
 		update_tilemap()

@@ -26,6 +26,7 @@ occlusion_layer_0/light_mask = 1
 sources/0 = SubResource("TileSetAtlasSource_qkqnn")
 
 [node name="Main" type="Node2D"]
+texture_filter = 1
 
 [node name="GameplayArea" type="Node2D" parent="."]
 modulate = Color(0.48, 0.48, 0.48, 1)
@@ -44,7 +45,9 @@ texture = ExtResource("8_2svjh")
 position = Vector2(-320, -640)
 tile_set = SubResource("TileSet_3wcsh")
 format = 2
-layer_0/name = "Default"
+layer_0/name = "Game"
+layer_1/name = "Queue"
+layer_1/tile_data = PackedInt32Array()
 
 [node name="Camera2D" type="Camera2D" parent="GameplayArea"]
 zoom = Vector2(0.64, 0.64)

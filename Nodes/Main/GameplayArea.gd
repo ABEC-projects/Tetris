@@ -71,11 +71,15 @@ var rotation_delay_time := 0.0
 var mevement_prepare_time := 0.0
 var movement_delay_time := 0.0
 var center := Vector2i(4,1)
+var score := 0
+var combo_counter := 0
+var btb_counter := 0
 var curr_tetromino: int
 var curr_rotation := 0									#0 is "0", 1 is "r", 2 is "2" and 3 is "l"
 var hard_drop := false
 var field_changed := true
 var need_to_spawn := false
+var cleaned_row := false
 var inputs_storage := {
 	"turn_clockwise": false,
 	"turn_clockwise_just_pressed": false,
@@ -90,6 +94,8 @@ var inputs_storage := {
 var can_store := true
 var just_rotated := false
 var just_moved := false
+var just_collided := false
+var just_removed_row := false
 var stored_tetromino := -1
 @export var target_frame_rate := 120
 @export var game_update_tick := 1.0/60
@@ -140,21 +146,21 @@ func spawn_tetromino():
 func update_tilemap():
 	for x in range(field_size.x):
 		for y in range(field_size.y):
-			$Tetrominos_tiles.set_cell(0, Vector2i(x, y-ceiling_offset), 0, Vector2i(abs(field[x][y])-1, 0))
+			%Tetrominos_tiles.set_cell(0, Vector2i(x, y-ceiling_offset), 0, Vector2i(abs(field[x][y])-1, 0))
 
 func update_queue_visualisation():
-	$Tetrominos_tiles.clear_layer(1)
+	%Tetrominos_tiles.clear_layer(1)
 	for delX in range(4):
 		for delY in range(30):
-			$Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(delX, delY),
+			%Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(delX, delY),
 										 0, Vector2i(-2, 0))
 	for i in range(tetromino_queque.size()):
 		for cell_to_draw in cells[tetromino_queque[i]][0]:
-			$Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(cell_to_draw.x, cell_to_draw.y+i*3),
+			%Tetrominos_tiles.set_cell	(1, queue_begin_point+Vector2i(cell_to_draw.x, cell_to_draw.y+i*3),
 										 0, Vector2i(abs(color[tetromino_queque[i]])-1, 0))
 	if stored_tetromino != -1:
 		for i in cells[stored_tetromino][0]:
-			$Tetrominos_tiles.set_cell	(1, storage_begin_point+Vector2i(i.x, i.y),
+			%Tetrominos_tiles.set_cell	(1, storage_begin_point+Vector2i(i.x, i.y),
 										 0, Vector2i(color[stored_tetromino]-1, 0))
 
 func _ready():
@@ -171,21 +177,58 @@ func _ready():
 	spawn_tetromino()
 
 func remove_full_rows():
-	for y in range(field_size.y):
-		var full_row: bool = true
-		for x in range(field_size.x):
-			if field[x][y] >= 0:
-				full_row = false
-				break
-		if full_row:
-			field_changed = true
-			for del in range(field_size.x):
-				field[del][y] = 0
-			for y1 in range(y-1, -1, -1):
-				for x1 in range(field_size.x):
-					if field[x1][y1] < 0:
-						field[x1][y1+1] = field[x1][y1]
-						field[x1][y1] = 0
+	if just_collided:
+		just_collided = false
+		var counter := 0
+		for y in range(field_size.y):
+			var full_row: bool = true
+			for x in range(field_size.x):
+				if field[x][y] >= 0:
+					full_row = false
+					break
+			if full_row:
+				counter += 1
+				field_changed = true
+				for del in range(field_size.x):
+					field[del][y] = 0
+				for y1 in range(y-1, -1, -1):
+					for x1 in range(field_size.x):
+						if field[x1][y1] < 0:
+							field[x1][y1+1] = field[x1][y1]
+							field[x1][y1] = 0
+		if counter > 0:
+			var add := 0
+			#region Regular
+			match counter:
+				1:
+					add += 100
+				2:
+					add += 300
+				3:
+					add += 500
+				4:
+					add += 800
+			#endregion
+			#region Combo
+			if just_removed_row:
+				combo_counter += 1
+				add += combo_counter*50
+			else:
+				combo_counter = 0
+			#endregion
+			#region BtB
+			if counter == 4:
+				if btb_counter > 0:
+					add *= 1.5
+				btb_counter += 1
+			else:
+				btb_counter = 0
+			#endregion
+			score += add
+			%UI.change_score(score)
+			just_removed_row = true
+		else:
+			just_removed_row = false
 
 func dropTetromino():
 	while fall_prepare_time >= fall_tick_period:
@@ -214,6 +257,7 @@ func dropTetromino():
 			inputs_storage["hard_drop"] = false
 			collision = false
 			need_to_spawn = true
+			just_collided = true
 			fall_prepare_time = 0
 		#endregion
 		#region IfNoCollision

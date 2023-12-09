@@ -17,8 +17,11 @@ config/icon="res://icon.svg"
 
 [display]
 
-window/size/viewport_width=900
-window/size/viewport_height=900
+window/size/viewport_width=1920
+window/size/viewport_height=1408
+window/size/mode=2
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [editor_plugins]
 
@@ -26,7 +29,7 @@ enabled=PackedStringArray("res://addons/coi_serviceworker/plugin.cfg")
 
 [global]
 
-coi=false
+coi=true
 
 [input]
 

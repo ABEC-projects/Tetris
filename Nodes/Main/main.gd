@@ -12,4 +12,4 @@ func _ready():
 	
 func myfunc():
 	get_viewport().size = Vector2(round(get_viewport().size.x / 2) * 2, round(get_viewport().size.y / 2) * 2)
-	print("Resizing: ", get_viewport().size)
+	RenderingServer.global_shader_parameter_set("ratio", get_viewport().size.x/get_viewport().size.y)

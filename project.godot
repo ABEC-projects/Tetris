@@ -76,3 +76,10 @@ store={
 [rendering]
 
 renderer/rendering_method="mobile"
+
+[shader_globals]
+
+ratio={
+"type": "float",
+"value": 1.778
+}

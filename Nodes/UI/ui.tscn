@@ -27,14 +27,16 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Score" type="Label" parent="InGameUI"]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.00104167
+anchor_right = 0.00104167
 offset_right = 469.0
 offset_bottom = 57.0
 text = "Your score is: 0
 "
 label_settings = SubResource("LabelSettings_prr1r")
 autowrap_mode = 3
-
 [node name="Pause" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15

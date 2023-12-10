@@ -152,7 +152,6 @@ func update_tilemap():
 			%Tetrominos_tiles.set_cell(0, Vector2i(x, y-ceiling_offset), tilemap, Vector2i(abs(field[x][y])-1, 0))
 	%Tetrominos_tiles.clear_layer(2)
 	for i in range(center.y, field_size.y+1):
-		print(i)
 		var min_y := 100
 		var collided := false
 		for cel in cells[curr_tetromino][curr_rotation]:
@@ -161,7 +160,6 @@ func update_tilemap():
 				min_y = min(min_y, cel.y+i)
 		if collided:
 			for cel in cells[curr_tetromino][curr_rotation]:
-				print(Vector2i(cel.x+center.x, cel.y+i-min_y))
 				%Tetrominos_tiles.set_cell	(2, Vector2i(cel.x+center.x, cel.y+i-ceiling_offset), 
 											tilemap, Vector2i(7, 0))
 			break
@@ -467,6 +465,3 @@ func _process(_delta):
 		if field_changed:
 			update_tilemap()
 		field_changed = false
-
-
-

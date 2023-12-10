@@ -61,7 +61,7 @@ shader_parameter/offset = 1.0
 script = ExtResource("1_uk6bs")
 
 [node name="GameplayArea" type="Node2D" parent="."]
-position = Vector2(704, 704)
+position = Vector2(960, 704)
 script = ExtResource("1_hmy31")
 
 [node name="Camera2D" type="Camera2D" parent="GameplayArea"]
@@ -92,25 +92,7 @@ layer_2/modulate = Color(1, 1, 1, 0.886275)
 layer_2/tile_data = PackedInt32Array()
 
 [node name="UICanvas" type="CanvasLayer" parent="."]
+layer = 2
 
 [node name="UI" parent="UICanvas" instance=ExtResource("5_3pxsb")]
 unique_name_in_owner = true
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_right = 1409.0
-offset_bottom = 1404.0
-grow_horizontal = 1
-grow_vertical = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="ColorAbberation" type="CanvasLayer" parent="UICanvas"]
-
-[node name="ColorRect" type="ColorRect" parent="UICanvas/ColorAbberation"]
-material = SubResource("ShaderMaterial_c6qbr")
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(1, 1, 1, 0)

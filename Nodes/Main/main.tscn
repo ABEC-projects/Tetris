@@ -45,7 +45,7 @@ sources/1 = SubResource("TileSetAtlasSource_kg3ni")
 script = ExtResource("1_uk6bs")
 
 [node name="GameplayArea" type="Node2D" parent="."]
-position = Vector2(704, 704)
+position = Vector2(960, 704)
 script = ExtResource("1_hmy31")
 
 [node name="Board" type="Sprite2D" parent="GameplayArea"]
@@ -69,13 +69,7 @@ layer_2/tile_data = PackedInt32Array()
 [node name="Camera2D" type="Camera2D" parent="GameplayArea"]
 
 [node name="UICanvas" type="CanvasLayer" parent="."]
+layer = 2
 
 [node name="UI" parent="UICanvas" instance=ExtResource("5_3pxsb")]
 unique_name_in_owner = true
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_right = 1409.0
-offset_bottom = 1404.0
-grow_horizontal = 1
-grow_vertical = 1

@@ -1,11 +1,19 @@
-[gd_scene load_steps=10 format=3 uid="uid://cuiwin4353u6r"]
+[gd_scene load_steps=14 format=3 uid="uid://cuiwin4353u6r"]
 
 [ext_resource type="Script" path="res://Nodes/Main/GameplayArea.gd" id="1_hmy31"]
 [ext_resource type="Script" path="res://Nodes/Main/main.gd" id="1_uk6bs"]
 [ext_resource type="Texture2D" uid="uid://b7j4cltuj8xwh" path="res://Resourses/Tetriminos/Tilemap.png" id="2_cdsyl"]
+[ext_resource type="Shader" path="res://Nodes/Main/camera_shader.gdshader" id="3_bffdx"]
 [ext_resource type="PackedScene" uid="uid://0rikjuwhwxi0" path="res://Nodes/UI/ui.tscn" id="5_3pxsb"]
 [ext_resource type="Texture2D" uid="uid://b4w0j8k1wamri" path="res://Resourses/Alt tetrominos/tilemap.svg" id="5_kkbdc"]
 [ext_resource type="Texture2D" uid="uid://cfk2dh51uriww" path="res://Resourses/Tetriminos/Board/Board.png" id="8_2svjh"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cfubm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_aa1cq"]
+shader = ExtResource("3_bffdx")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ihac4"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qkqnn"]
 resource_name = "Standart"
@@ -48,25 +56,31 @@ script = ExtResource("1_uk6bs")
 position = Vector2(704, 704)
 script = ExtResource("1_hmy31")
 
-[node name="Board" type="Sprite2D" parent="GameplayArea"]
+[node name="Camera2D" type="Camera2D" parent="GameplayArea"]
+material = SubResource("ShaderMaterial_cfubm")
+
+[node name="CanvasGroup" type="CanvasGroup" parent="GameplayArea"]
+material = SubResource("ShaderMaterial_aa1cq")
+
+[node name="Board" type="Sprite2D" parent="GameplayArea/CanvasGroup"]
 light_mask = 3
 visibility_layer = 3
 texture_filter = 1
 texture = ExtResource("8_2svjh")
 
-[node name="Tetrominos_tiles" type="TileMap" parent="GameplayArea"]
+[node name="Tetrominos_tiles" type="TileMap" parent="GameplayArea/CanvasGroup"]
 unique_name_in_owner = true
-texture_filter = 1
+material = SubResource("ShaderMaterial_ihac4")
 position = Vector2(-320, -640)
 tile_set = SubResource("TileSet_3wcsh")
 format = 2
 layer_0/name = "Game"
+layer_0/tile_data = PackedInt32Array(589825, 1, 0, 589826, 65537, 0, 589827, 131073, 0, 589828, 196609, 0, 589830, 327681, 0, 589831, 393217, 0, 589832, 458753, 0, 589829, 1, 0)
 layer_1/name = "Queue"
 layer_1/tile_data = PackedInt32Array()
 layer_2/name = "Ghost"
+layer_2/modulate = Color(1, 1, 1, 0.886275)
 layer_2/tile_data = PackedInt32Array()
-
-[node name="Camera2D" type="Camera2D" parent="GameplayArea"]
 
 [node name="UICanvas" type="CanvasLayer" parent="."]
 
@@ -79,3 +93,4 @@ offset_right = 1409.0
 offset_bottom = 1404.0
 grow_horizontal = 1
 grow_vertical = 1
+metadata/_edit_use_anchors_ = true

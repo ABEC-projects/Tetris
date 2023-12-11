@@ -98,7 +98,6 @@ var just_moved := false
 var just_collided := false
 var just_removed_row := false
 var stored_tetromino := -1
-var pause := false
 @export var target_frame_rate := 120
 @export var game_update_tick := 1.0/60
 @export var fall_tick_period := game_update_tick*60
@@ -113,7 +112,6 @@ func rand_tetromino() -> int:
 	return Tetromino.get(Tetromino.find_key(randi()%7))
 
 func defeat():
-	pause = true
 	get_tree().paused = true
 
 func spawn_tetromino():
@@ -234,6 +232,7 @@ func remove_full_rows():
 			#endregion
 			#region BtB
 			if counter == 4:
+				%WowYouGotTetris.play()
 				if btb_counter > 0:
 					add *= 1.5
 				btb_counter += 1
@@ -437,31 +436,34 @@ func store_tetromino():
 		update_queue_visualisation()
 
 func _process(_delta):
-	if  !pause:
-		get_inputs()
-		if need_to_spawn:
-			spawn_tetromino()
-			need_to_spawn = false
-		
-		if Input.is_action_just_pressed("hard_drop"):
-			hard_drop = true
-			fall_prepare_time = fall_tick_period*100
-		
-		if Input.is_action_pressed("soft_drop") == true:
-			fall_prepare_time += _delta*soft_drop_speed
-		else:
-			fall_prepare_time += _delta
-		rotation_prepare_time += _delta
-		rotation_delay_time += _delta
-		mevement_prepare_time += _delta
-		movement_delay_time += _delta
-		
-		moveTetromino()
-		rotateTetromino()
-		dropTetromino()
-		remove_full_rows()
-		store_tetromino()
-		
-		if field_changed:
-			update_tilemap()
-		field_changed = false
+	get_inputs()
+	if need_to_spawn:
+		spawn_tetromino()
+		need_to_spawn = false
+	
+	if Input.is_action_just_pressed("hard_drop"):
+		hard_drop = true
+		fall_prepare_time = fall_tick_period*100
+	
+	if Input.is_action_pressed("soft_drop") == true:
+		fall_prepare_time += _delta*soft_drop_speed
+	else:
+		fall_prepare_time += _delta
+	rotation_prepare_time += _delta
+	rotation_delay_time += _delta
+	mevement_prepare_time += _delta
+	movement_delay_time += _delta
+	
+	moveTetromino()
+	rotateTetromino()
+	dropTetromino()
+	remove_full_rows()
+	store_tetromino()
+	
+	if field_changed:
+		update_tilemap()
+	field_changed = false
+
+
+func _on_ui_toggle_pause(paused):
+	get_tree().paused = paused

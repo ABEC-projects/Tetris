@@ -2,10 +2,8 @@
 
 [ext_resource type="Script" path="res://Nodes/UI/ui.gd" id="1_cgxvr"]
 [ext_resource type="Shader" path="res://Resourses/Shaders/blur.gdshader" id="2_g173y"]
+[ext_resource type="LabelSettings" uid="uid://bcoycbjdcg407" path="res://Nodes/UI/LabelSettings/score_font.tres" id="2_v7why"]
 [ext_resource type="LabelSettings" uid="uid://bbvcgqgrjvaw4" path="res://Nodes/UI/LabelSettings/pause_font.tres" id="3_axfgc"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_prr1r"]
-font_size = 32
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6ka70"]
 shader = ExtResource("2_g173y")
@@ -21,6 +19,7 @@ grow_vertical = 2
 script = ExtResource("1_cgxvr")
 
 [node name="InGameUI" type="Control" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,19 +27,25 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Score" type="Label" parent="InGameUI"]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.00104167
-anchor_right = 0.00104167
-offset_right = 469.0
-offset_bottom = 57.0
-text = "Your score is: 0
+[node name="VBoxContainer" type="VBoxContainer" parent="InGameUI"]
+layout_mode = 0
+offset_right = 474.0
+offset_bottom = 180.0
+
+[node name="Your scre is" type="Label" parent="InGameUI/VBoxContainer"]
+layout_mode = 2
+text = "Your score is: 
 "
-label_settings = SubResource("LabelSettings_prr1r")
-autowrap_mode = 3
+label_settings = ExtResource("2_v7why")
+
+[node name="Score" type="Label" parent="InGameUI/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+label_settings = ExtResource("2_v7why")
 
 [node name="Pause" type="Control" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -193,5 +198,55 @@ grow_horizontal = 2
 grow_vertical = 2
 text = "Quit"
 label_settings = ExtResource("3_axfgc")
+
+[node name="Settings" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="Settings"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.239216, 0.239216, 0.239216, 1)
+
+[node name="Panel" type="Panel" parent="Settings"]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.3
+anchor_top = 0.2
+anchor_right = 0.7
+anchor_bottom = 0.8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Settings/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SliderSetting" type="HBoxContainer" parent="Settings/Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="SettingName" type="Label" parent="Settings/Panel/VBoxContainer/SliderSetting"]
+layout_mode = 2
+text = "Aboba"
+horizontal_alignment = 1
+
+[node name="HSlider" type="HSlider" parent="Settings/Panel/VBoxContainer/SliderSetting"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Value" type="TextEdit" parent="Settings/Panel/VBoxContainer/SliderSetting"]
+layout_mode = 2
 
 [connection signal="button_up" from="Pause/PanelContainer/VBoxContainer/Continue" to="." method="_on_continue_button_up"]

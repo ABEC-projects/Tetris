@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://cuiwin4353u6r"]
+[gd_scene load_steps=12 format=3 uid="uid://cuiwin4353u6r"]
 
 [ext_resource type="Script" path="res://Nodes/Main/GameplayArea.gd" id="1_hmy31"]
 [ext_resource type="Script" path="res://Nodes/Main/main.gd" id="1_uk6bs"]
 [ext_resource type="Texture2D" uid="uid://b7j4cltuj8xwh" path="res://Resourses/Tetriminos/Tilemap.png" id="2_cdsyl"]
 [ext_resource type="PackedScene" uid="uid://0rikjuwhwxi0" path="res://Nodes/UI/ui.tscn" id="5_3pxsb"]
 [ext_resource type="Texture2D" uid="uid://b4w0j8k1wamri" path="res://Resourses/Alt tetrominos/tilemap.svg" id="5_kkbdc"]
+[ext_resource type="AudioStream" uid="uid://bi22x3bmb8sfa" path="res://Resourses/Sounds/[Vinesauce] Joel - WOW! YOU GOT THE TETRIS.mp3" id="6_p4dqu"]
 [ext_resource type="Texture2D" uid="uid://cfk2dh51uriww" path="res://Resourses/Tetriminos/Board/Board.png" id="8_2svjh"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_cfubm"]
@@ -44,9 +45,11 @@ sources/0 = SubResource("TileSetAtlasSource_qkqnn")
 sources/1 = SubResource("TileSetAtlasSource_kg3ni")
 
 [node name="Main" type="Node2D"]
+process_mode = 3
 script = ExtResource("1_uk6bs")
 
 [node name="GameplayArea" type="Node2D" parent="."]
+process_mode = 1
 position = Vector2(960, 704)
 script = ExtResource("1_hmy31")
 
@@ -72,8 +75,14 @@ layer_2/name = "Ghost"
 layer_2/modulate = Color(1, 1, 1, 0.886275)
 layer_2/tile_data = PackedInt32Array()
 
+[node name="WowYouGotTetris" type="AudioStreamPlayer" parent="GameplayArea"]
+unique_name_in_owner = true
+stream = ExtResource("6_p4dqu")
+
 [node name="UICanvas" type="CanvasLayer" parent="."]
 layer = 2
 
 [node name="UI" parent="UICanvas" instance=ExtResource("5_3pxsb")]
 unique_name_in_owner = true
+
+[connection signal="toggle_pause" from="UICanvas/UI" to="GameplayArea" method="_on_ui_toggle_pause"]

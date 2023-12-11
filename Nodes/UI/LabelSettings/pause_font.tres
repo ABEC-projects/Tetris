@@ -1,0 +1,5 @@
+[gd_resource type="LabelSettings" format=3 uid="uid://bbvcgqgrjvaw4"]
+
+[resource]
+resource_name = "PauseFont"
+font_size = 64

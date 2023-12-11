@@ -1,13 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://0rikjuwhwxi0"]
+[gd_scene load_steps=6 format=3 uid="uid://0rikjuwhwxi0"]
 
 [ext_resource type="Script" path="res://Nodes/UI/ui.gd" id="1_cgxvr"]
 [ext_resource type="Shader" path="res://Resourses/Shaders/blur.gdshader" id="2_g173y"]
+[ext_resource type="LabelSettings" uid="uid://bbvcgqgrjvaw4" path="res://Nodes/UI/LabelSettings/pause_font.tres" id="3_axfgc"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_prr1r"]
 font_size = 32
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6ka70"]
 shader = ExtResource("2_g173y")
+shader_parameter/strength = 1
 
 [node name="UI" type="Control"]
 layout_mode = 3
@@ -37,6 +39,7 @@ text = "Your score is: 0
 "
 label_settings = SubResource("LabelSettings_prr1r")
 autowrap_mode = 3
+
 [node name="Pause" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -55,21 +58,6 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(1, 1, 1, 0)
 
-[node name="ColorRect" type="ColorRect" parent="Pause"]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.3
-anchor_top = 0.3
-anchor_right = 0.7
-anchor_bottom = 0.7
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.235294, 0.235294, 0.235294, 1)
-
 [node name="PanelContainer" type="PanelContainer" parent="Pause"]
 layout_mode = 1
 anchors_preset = -1
@@ -82,26 +70,128 @@ anchor_bottom = 0.7
 layout_mode = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="Button" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
+[node name="Continue" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
 
-[node name="Button2" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Continue"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -35.5
+offset_top = -11.5
+offset_right = 35.5
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Continue"
+label_settings = ExtResource("3_axfgc")
+
+[node name="Options" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
+
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Options"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Options
+"
+label_settings = ExtResource("3_axfgc")
 
 [node name="Button3" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
+
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Button3"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+label_settings = ExtResource("3_axfgc")
 
 [node name="Button4" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
+
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Button4"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+label_settings = ExtResource("3_axfgc")
 
 [node name="Button5" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
 
-[node name="Button6" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Button5"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+label_settings = ExtResource("3_axfgc")
+
+[node name="Quit" type="Button" parent="Pause/PanelContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 0
+
+[node name="Label" type="Label" parent="Pause/PanelContainer/VBoxContainer/Quit"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "Quit"
+label_settings = ExtResource("3_axfgc")
+
+[connection signal="button_up" from="Pause/PanelContainer/VBoxContainer/Continue" to="." method="_on_continue_button_up"]
